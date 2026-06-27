@@ -1,12 +1,15 @@
+import { useI18n } from '../i18n'
 
 export default function StickPicker({ value, color, onChange, label }) {
+  const { t } = useI18n()
+
   return (
     <div className="space-y-2">
       {label && <div className="text-xs uppercase tracking-widest text-[#8a6a35] mb-1">{label}</div>}
       {['R', 'Y'].map(c => (
         <div key={c} className="flex items-center gap-1.5">
           <span className={`text-[10px] uppercase tracking-wider w-9 shrink-0 font-bold ${c === 'R' ? 'text-red-400' : 'text-yellow-400'}`}>
-            {c === 'R' ? 'Red' : 'Gold'}
+            {c === 'R' ? t.colorRed : t.colorGold}
           </span>
           <div className="flex gap-1 flex-wrap">
             {[1,2,3,4,5,6,7,8,9,10].map(v => {

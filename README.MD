@@ -18,6 +18,7 @@ DUO is a Seotda-style card game played inside Crimson Desert. Each player receiv
 - **Aggression inference** -- log opponent actions (Check, Call, Half Pot, Raise, All In, Fold) to adjust advice based on how aggressively they are playing
 - **Multi-round support** -- re-analyze after each action log update; reset with New Round
 - **Hand reference** -- collapsible ranking table always available in-app
+- **9-language support** -- 🇺🇸 English, 🇰🇷 Korean, 🇧🇷 Portuguese, 🇪🇸 Spanish, 🇮🇹 Italian, 🇫🇷 French, 🇩🇪 German, 🇯🇵 Japanese, 🇨🇳 Chinese
 
 ## Hand Rankings (Best to Worst)
 

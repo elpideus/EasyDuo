@@ -4,7 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from './components/ui/card'
 import { Button } from './components/ui/button'
 import { Badge } from './components/ui/badge'
 import { Separator } from './components/ui/separator'
-import { handStrength, decide, pct, ACTION_COLORS } from './lib/duo'
+import { handStrength, decide, ACTION_COLORS } from './lib/duo'
+import { useI18n, interp } from './i18n'
 
 const ACTIONS = ['Check', 'Call', 'Half Pot', 'Raise', 'All In', 'Fold']
 
@@ -24,7 +25,43 @@ const LOG_ACTION_STYLE = {
   'Half Pot': 'text-yellow-400', Raise: 'text-orange-400', 'All In': 'text-red-400',
 }
 
+const LANG_LABELS = { en: '🇺🇸 EN', ko: '🇰🇷 한국어', pt: '🇧🇷 PT', es: '🇪🇸 ES', it: '🇮🇹 IT', fr: '🇫🇷 FR', de: '🇩🇪 DE', ja: '🇯🇵 JP', zh: '🇨🇳 中文' }
+
+function buildExpl(result, t) {
+  if (!result.explKey) return ''
+  const { explParams } = result
+  if (!explParams || !explParams.handDescKey) {
+    return t.expl[result.explKey] || ''
+  }
+  const hand = interp(t.hands[explParams.handDescKey] || '', explParams.handDescParams || {})
+  const oppDesc = explParams.hasOppLog
+    ? interp(t.expl.oppIs, { desc: t.expl[explParams.aggKey] || '', actions: explParams.oppActions })
+    : ''
+  return interp(t.expl[result.explKey] || '', { hand, win: explParams.win, opp: oppDesc })
+}
+
+function handDesc(myHand, t) {
+  if (!myHand) return ''
+  return interp(t.hands[myHand.descKey] || '', myHand.descParams || {})
+}
+
+function actionDisplay(action, t) {
+  const map = {
+    'ALL IN': t.actions['All In'],
+    'RAISE': t.actions['Raise'],
+    'HALF POT': t.actions['Half Pot'],
+    'CALL': t.actions['Call'],
+    'CHECK': t.actions['Check'],
+    'FOLD': t.actions['Fold'],
+    'WIN': t.win,
+    '—': '—',
+  }
+  return map[action] ?? action
+}
+
 export default function App() {
+  const { t, lang, setLang, langs } = useI18n()
+
   const [my1, setMy1] = useState({ v: null, c: 'R' })
   const [my2, setMy2] = useState({ v: null, c: 'Y' })
   const [oppCount, setOppCount] = useState(1)
@@ -58,7 +95,7 @@ export default function App() {
   }
 
   function addAction() {
-    const label = actWho === 'me' ? 'Me' : actWho.replace('opp', 'Opp ')
+    const label = actWho === 'me' ? t.me : `${t.opp} ${actWho.replace('opp', '')}`
     setLog(prev => [...prev, { who: actWho, action: actWhat, label }])
   }
 
@@ -69,13 +106,35 @@ export default function App() {
     setLog([])
   }
 
+  const explanation = buildExpl(result, t)
+  const myHandDesc = handDesc(myHand, t)
+
   return (
     <div className="min-h-screen bg-[#0f0c07] text-[#e8d5a3] p-4 md:p-6">
       <header className="text-center mb-6">
         <h1 className="text-3xl font-bold tracking-[4px] text-[#c8a84b] drop-shadow-[0_0_20px_rgba(200,168,75,0.4)]">
-          ⚔ DUO HELPER
+          {t.title}
         </h1>
-        <p className="text-[#4a3018] text-sm italic mt-1">Crimson Desert · Red &amp; Gold stick advisor</p>
+        <p className="text-[#4a3018] text-sm italic mt-1">{t.subtitle}</p>
+
+        {/* Language switcher */}
+        <div className="flex justify-center gap-1.5 mt-3">
+          {langs.map(l => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              className={`
+                px-2.5 py-1 rounded text-xs font-medium transition-all duration-150
+                ${lang === l
+                  ? 'bg-[#c8a84b] text-[#0f0c07] shadow-[0_0_8px_rgba(200,168,75,0.4)]'
+                  : 'bg-[#1a1408] border border-[#3a2510] text-[#6a5035] hover:border-[#c8a84b] hover:text-[#c8a84b]'
+                }
+              `}
+            >
+              {LANG_LABELS[l]}
+            </button>
+          ))}
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-5xl mx-auto">
@@ -85,13 +144,13 @@ export default function App() {
 
           {/* My Hand */}
           <Card>
-            <CardHeader><CardTitle>My Hand</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t.myHand}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <StickPicker label="Stick 1" value={my1.v} color={my1.c} onChange={(v, c) => setMy1({ v, c })} />
-              <StickPicker label="Stick 2" value={my2.v} color={my2.c} onChange={(v, c) => setMy2({ v, c })} />
+              <StickPicker label={t.stick1} value={my1.v} color={my1.c} onChange={(v, c) => setMy1({ v, c })} />
+              <StickPicker label={t.stick2} value={my2.v} color={my2.c} onChange={(v, c) => setMy2({ v, c })} />
               {myHand && (
                 <div className="pt-1">
-                  <Badge variant={myHand.tier}>{myHand.desc}</Badge>
+                  <Badge variant={myHand.tier}>{myHandDesc}</Badge>
                 </div>
               )}
             </CardContent>
@@ -99,10 +158,10 @@ export default function App() {
 
           {/* Opponents */}
           <Card>
-            <CardHeader><CardTitle>Opponents</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t.opponents}</CardTitle></CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs text-[#8a6a35] uppercase tracking-wider mr-1">Count</span>
+                <span className="text-xs text-[#8a6a35] uppercase tracking-wider mr-1">{t.count}</span>
                 {[1, 2, 3].map(n => (
                   <Button
                     key={n}
@@ -123,8 +182,8 @@ export default function App() {
                       className={`p-3 bg-[#100d05] rounded-lg border border-[#2e200e] transition-opacity ${folded ? 'opacity-40 pointer-events-none' : ''}`}
                     >
                       <div className="text-xs text-[#c8a84b] uppercase tracking-wider mb-2 flex items-center gap-2">
-                        Opponent {i + 1}: Visible Stick
-                        {folded && <span className="text-zinc-500 normal-case tracking-normal font-normal">(folded)</span>}
+                        {interp(t.oppVisible, { n: i + 1 })}
+                        {folded && <span className="text-zinc-500 normal-case tracking-normal font-normal">({t.folded})</span>}
                       </div>
                       <StickPicker
                         value={opp.visible?.v}
@@ -138,7 +197,7 @@ export default function App() {
 
               <Separator className="my-4" />
               <Button variant="ghost" className="w-full" onClick={newRound}>
-                ↺ New Round
+                {t.newRound}
               </Button>
             </CardContent>
           </Card>
@@ -148,24 +207,11 @@ export default function App() {
             <CardContent className="pt-5">
               <details>
                 <summary className="cursor-pointer text-xs uppercase tracking-widest text-[#8a6a35] select-none">
-                  ▸ Hand Rankings Reference
+                  {t.handRef}
                 </summary>
                 <table className="w-full text-xs mt-3 border-collapse">
                   <tbody>
-                    {[
-                      ['Prime Pair ✦', 'Red 3 + Red 8'],
-                      ['Executor', 'Red 4 + Red 7'],
-                      ['Superior Pair', 'Red 1+8 > Red 1+3'],
-                      ['Ten Pair ✦', '10 + 10 (any color)'],
-                      ['Judge', '3+7 any (beats all pairs)'],
-                      ['Pair 9→1', 'Higher pair wins'],
-                      ['High Warden', 'Red 4+9 (between pair 9 & 8)'],
-                      ['Warden', '4+9 any (rematch vs low)'],
-                      ['Specials', '1+2 > 1+4 > 1+9 > 1+10 > 4+10 > 4+6'],
-                      ['Perfect Nine', 'Sum = 9'],
-                      ['Points 8→1', 'Sum % 10'],
-                      ['Zero / Bust', 'Worst hand'],
-                    ].map(([name, desc]) => (
+                    {t.refTable.map(([name, desc]) => (
                       <tr key={name} className="border-b border-[#1a1208]">
                         <td className="py-1.5 pr-3 text-[#c8a84b] whitespace-nowrap">{name}</td>
                         <td className="py-1.5 text-[#8a6a35]">{desc}</td>
@@ -184,16 +230,15 @@ export default function App() {
 
           {/* Recommendation */}
           <Card>
-            <CardHeader><CardTitle>Recommendation</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t.recommendation}</CardTitle></CardHeader>
             <CardContent>
-              {/* Action display */}
               <div className={`rounded-lg border p-5 text-center mb-4 ${ACTION_CARD_STYLE[result.action] || ACTION_CARD_STYLE['—']}`}>
                 <div className={`text-4xl font-bold tracking-widest mb-1 ${ACTION_COLORS[result.action] || 'text-zinc-500'}`}>
-                  {result.action}
+                  {actionDisplay(result.action, t)}
                 </div>
                 {myHand
-                  ? <div className="text-xs text-[#8a6a35]">Your hand: {myHand.desc}</div>
-                  : <div className="text-xs text-[#4a3018]">Select your sticks to begin</div>
+                  ? <div className="text-xs text-[#8a6a35]">{t.yourHand} {myHandDesc}</div>
+                  : <div className="text-xs text-[#4a3018]">{t.selectSticks}</div>
                 }
               </div>
 
@@ -208,19 +253,19 @@ export default function App() {
                 <div className="flex justify-between text-[11px] text-[#6a5035] mt-1">
                   {result.prob ? (
                     <>
-                      <span>Win {pct(result.prob.win)}</span>
-                      <span>Tie {pct(result.prob.tie)}</span>
-                      <span>Lose {pct(result.prob.lose)}</span>
+                      <span>{t.win} {Math.round((result.prob.win || 0) * 100)}%</span>
+                      <span>{t.tie} {Math.round((result.prob.tie || 0) * 100)}%</span>
+                      <span>{t.lose} {Math.round((result.prob.lose || 0) * 100)}%</span>
                     </>
                   ) : (
-                    <><span>Win —</span><span>Tie —</span><span>Lose —</span></>
+                    <><span>{t.win} —</span><span>{t.tie} —</span><span>{t.lose} —</span></>
                   )}
                 </div>
               </div>
 
               {/* Explanation */}
               <div className="text-sm text-[#c8b07a] bg-[#100d05] border border-[#2e200e] rounded-lg p-3 leading-relaxed min-h-[60px]">
-                {result.explanation}
+                {explanation}
               </div>
             </CardContent>
           </Card>
@@ -229,14 +274,13 @@ export default function App() {
           <Card>
             <CardHeader>
               <CardTitle>
-                Action Log
+                {t.actionLog}
                 <span className="ml-2 normal-case tracking-normal text-[#4a3018] font-normal">
-                  (refines advice via aggression inference)
+                  {t.actionLogNote}
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Add action */}
               <div className="flex gap-2 mb-3 flex-wrap">
                 <select
                   value={actWho}
@@ -244,34 +288,33 @@ export default function App() {
                   className="bg-[#0c0a05] border border-[#3a2510] text-[#e8d5a3] rounded-md px-2 py-1.5 text-sm flex-1 min-w-[80px] focus:outline-none focus:ring-1 focus:ring-[#c8a84b]"
                 >
                   {activeOpps.map((_, i) => (
-                    <option key={i} value={`opp${i + 1}`}>Opp {i + 1}</option>
+                    <option key={i} value={`opp${i + 1}`}>{t.opp} {i + 1}</option>
                   ))}
-                  <option value="me">Me</option>
+                  <option value="me">{t.me}</option>
                 </select>
                 <select
                   value={actWhat}
                   onChange={e => setActWhat(e.target.value)}
                   className="bg-[#0c0a05] border border-[#3a2510] text-[#e8d5a3] rounded-md px-2 py-1.5 text-sm flex-1 min-w-[90px] focus:outline-none focus:ring-1 focus:ring-[#c8a84b]"
                 >
-                  {ACTIONS.map(a => <option key={a} value={a}>{a}</option>)}
+                  {ACTIONS.map(a => <option key={a} value={a}>{t.actions[a]}</option>)}
                 </select>
-                <Button variant="log" size="sm" onClick={addAction}>+ Log</Button>
+                <Button variant="log" size="sm" onClick={addAction}>{t.logBtn}</Button>
                 {log.length > 0 && (
-                  <Button variant="destructive" size="sm" onClick={() => setLog([])}>Clear</Button>
+                  <Button variant="destructive" size="sm" onClick={() => setLog([])}>{t.clear}</Button>
                 )}
               </div>
 
               <Separator className="mb-3" />
 
-              {/* Log entries */}
               <div className="max-h-48 overflow-y-auto bg-[#0c0a05] border border-[#2e200e] rounded-lg p-2 space-y-0.5">
                 {log.length === 0 ? (
-                  <div className="text-[#3a2810] italic text-sm p-1">No actions yet.</div>
+                  <div className="text-[#3a2810] italic text-sm p-1">{t.noActions}</div>
                 ) : (
                   log.map((entry, i) => (
                     <div key={i} className="flex gap-2 text-sm border-b border-[#1a1208] last:border-0 py-1.5">
                       <span className="text-[#c8a84b] font-semibold min-w-[56px]">{entry.label}</span>
-                      <span className={LOG_ACTION_STYLE[entry.action] || ''}>{entry.action}</span>
+                      <span className={LOG_ACTION_STYLE[entry.action] || ''}>{t.actions[entry.action] || entry.action}</span>
                     </div>
                   ))
                 )}
@@ -283,7 +326,7 @@ export default function App() {
       </div>
 
       <footer className="text-center mt-10 pb-6 text-[#3a2810] text-sm">
-        Developed with ❤️ by <a href="https://github.com/elpideus" target="_blank" rel="noopener noreferrer" className="text-[#6a5035] hover:text-[#c8a84b] transition-colors">elpideus</a>
+        {t.footerBy} <a href="https://github.com/elpideus" target="_blank" rel="noopener noreferrer" className="text-[#6a5035] hover:text-[#c8a84b] transition-colors">elpideus</a>
       </footer>
     </div>
   )
