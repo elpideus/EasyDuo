@@ -6,7 +6,7 @@ export function interp(str, params = {}) {
 
 const T = {
   en: {
-    title: '⚔ DUO HELPER',
+    title: '⚔ EASY DUO',
     subtitle: 'Crimson Desert · Red & Gold stick advisor',
     myHand: 'My Hand',
     stick1: 'Stick 1',
@@ -186,7 +186,7 @@ const T = {
   },
 
   pt: {
-    title: '⚔ DUO HELPER',
+    title: '⚔ EASY DUO',
     subtitle: 'Crimson Desert · Conselheiro de varetas Vermelho & Ouro',
     myHand: 'Minha Mão',
     stick1: 'Vareta 1',
@@ -276,7 +276,7 @@ const T = {
   },
 
   es: {
-    title: '⚔ DUO HELPER',
+    title: '⚔ EASY DUO',
     subtitle: 'Crimson Desert · Consejero de varillas Rojo & Oro',
     myHand: 'Mi Mano',
     stick1: 'Varilla 1',
@@ -366,7 +366,7 @@ const T = {
   },
 
   it: {
-    title: '⚔ DUO HELPER',
+    title: '⚔ EASY DUO',
     subtitle: 'Crimson Desert · Consigliere bastoncini Rosso & Oro',
     myHand: 'La Mia Mano',
     stick1: 'Bastoncino 1',
@@ -456,7 +456,7 @@ const T = {
   },
 
   fr: {
-    title: '⚔ DUO HELPER',
+    title: '⚔ EASY DUO',
     subtitle: 'Crimson Desert · Conseiller bâtons Rouge & Or',
     myHand: 'Ma Main',
     stick1: 'Bâton 1',
@@ -546,7 +546,7 @@ const T = {
   },
 
   de: {
-    title: '⚔ DUO HELPER',
+    title: '⚔ EASY DUO',
     subtitle: 'Crimson Desert · Rot & Gold Stab Berater',
     myHand: 'Meine Hand',
     stick1: 'Stab 1',
@@ -817,9 +817,29 @@ const T = {
 }
 
 const I18nCtx = createContext(null)
+const LANGS = Object.keys(T)
+const BASE = '/EasyDuo/'
+
+function detectLang() {
+  const path = window.location.pathname.slice(BASE.length).replace(/\/+$/, '')
+  if (LANGS.includes(path)) return path
+  const stored = sessionStorage.getItem('__easyduo_lang')
+  if (stored && LANGS.includes(stored)) {
+    sessionStorage.removeItem('__easyduo_lang')
+    history.replaceState(null, '', BASE + stored)
+    return stored
+  }
+  return 'en'
+}
 
 export function I18nProvider({ children }) {
-  const [lang, setLang] = useState('en')
+  const [lang, setLangState] = useState(detectLang)
+
+  function setLang(l) {
+    setLangState(l)
+    history.replaceState(null, '', BASE + (l === 'en' ? '' : l))
+  }
+
   return (
     <I18nCtx.Provider value={{ t: T[lang], lang, setLang, langs: Object.keys(T) }}>
       {children}

@@ -1,4 +1,4 @@
-# DUO Helper - Crimson Desert
+# Easy Duo - Crimson Desert
 
 A real-time win probability calculator and betting advisor for the **DUO** mini-game in Crimson Desert.
 
@@ -19,6 +19,7 @@ DUO is a Seotda-style card game played inside Crimson Desert. Each player receiv
 - **Multi-round support** -- re-analyze after each action log update; reset with New Round
 - **Hand reference** -- collapsible ranking table always available in-app
 - **9-language support** -- 🇺🇸 English, 🇰🇷 Korean, 🇧🇷 Portuguese, 🇪🇸 Spanish, 🇮🇹 Italian, 🇫🇷 French, 🇩🇪 German, 🇯🇵 Japanese, 🇨🇳 Chinese
+- **URL language routing** -- link directly to a language: `/EasyDuo/it` → Italian, `/EasyDuo/ko` → Korean, etc. Default (no path) = English
 
 ## Hand Rankings (Best to Worst)
 
