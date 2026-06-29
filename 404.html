@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+  (function () {
+    var base = '/EasyDuo/';
+    var lang = window.location.pathname.slice(base.length).replace(/\/+$/, '');
+    if (lang) sessionStorage.setItem('__easyduo_lang', lang);
+    window.location.replace(base + window.location.search + window.location.hash);
+  })();
+</script>
+</head>
+<body></body>
+</html>
